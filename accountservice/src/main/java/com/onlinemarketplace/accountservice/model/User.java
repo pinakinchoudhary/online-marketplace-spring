@@ -3,7 +3,8 @@ package com.onlinemarketplace.accountservice.model;
 import jakarta.persistence.*;
 
 @Entity
-public class AccountUser {
+@Table(name="account_user")
+public class User {
     @Id
     @SequenceGenerator(
             name="user_sequence",
