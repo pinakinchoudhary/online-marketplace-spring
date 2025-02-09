@@ -7,20 +7,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClient;
-
 import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "api/v1")
 public class AccountServiceController {
     private final UserRepository userRepository;
-    private final WebClient.Builder webClientBuilder;
 
     @Autowired
-    public AccountServiceController(UserRepository userRepository, WebClient.Builder webClientBuilder) {
+    public AccountServiceController(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.webClientBuilder = webClientBuilder;
     }
 
     @PostMapping(value = "/users", consumes = "application/json")

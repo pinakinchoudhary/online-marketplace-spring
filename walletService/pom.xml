@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.onlinemarketplace</groupId>
-	<artifactId>accountService</artifactId>
+	<artifactId>walletService</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>accountservice</name>
-	<description>Online Marketplace in SpringBoot</description>
+	<name>walletService</name>
+	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -50,6 +50,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>

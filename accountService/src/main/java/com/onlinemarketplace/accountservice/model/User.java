@@ -15,6 +15,8 @@ public class User {
             generator = "user_sequence"
     )
     private Long userID;
+    // Note: This works because in Payload JSON, id field is not present, it's auto-generated. All other names in payload
+    // must match the ones defined here!
     private String name;
     @Column(unique=true)
     private String email;

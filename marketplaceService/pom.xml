@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.onlinemarketplace</groupId>
-	<artifactId>accountService</artifactId>
+	<artifactId>marketplaceService</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>accountservice</name>
-	<description>Online Marketplace in SpringBoot</description>
+	<name>marketplaceservice</name>
+	<description>Marketplace Service implementation in Spring</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -38,7 +38,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
@@ -49,7 +48,13 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-csv</artifactId>
+			<version>2.5.3</version>
+		</dependency>
 	</dependencies>
+
 	<build>
 		<plugins>
 			<plugin>
