@@ -14,7 +14,7 @@ public class User {
             strategy = GenerationType.SEQUENCE,
             generator = "user_sequence"
     )
-    private Long id;
+    private Long userID;
     private String name;
     @Column(unique=true)
     private String email;
@@ -23,19 +23,19 @@ public class User {
     @Override
     public String toString() {
         return "AccountUser{" +
-                "id=" + id +
+                "id=" + userID +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", discount_valid=" + discount_valid +
                 '}';
     }
 
-    public Long getId() {
-        return id;
+    public Long getUserID() {
+        return userID;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setUserID(Long id) {
+        this.userID = id;
     }
 
     public String getName() {
