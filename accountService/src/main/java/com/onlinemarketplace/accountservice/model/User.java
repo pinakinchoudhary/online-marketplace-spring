@@ -14,7 +14,7 @@ public class User {
             strategy = GenerationType.SEQUENCE,
             generator = "user_sequence"
     )
-    private Long userID;
+    private Integer userID;
     // Note: This works because in Payload JSON, id field is not present, it's auto-generated. All other names in payload
     // must match the ones defined here!
     private String name;
@@ -32,11 +32,11 @@ public class User {
                 '}';
     }
 
-    public Long getUserID() {
+    public Integer getUserID() {
         return userID;
     }
 
-    public void setUserID(Long id) {
+    public void setUserID(Integer id) {
         this.userID = id;
     }
 

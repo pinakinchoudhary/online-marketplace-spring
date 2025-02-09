@@ -9,15 +9,15 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Integer> {
 
-    Optional<User> findByUserID(Long userId);
+    Optional<User> findByUserID(Integer userId);
 
     Optional<User> findByEmail(String userEmail);
 
     @Transactional
     @Modifying
-    void deleteByUserID(Long userId);
+    void deleteByUserID(Integer userId);
 
     @Transactional
     @Modifying

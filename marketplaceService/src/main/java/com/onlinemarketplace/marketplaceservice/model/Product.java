@@ -1,22 +1,11 @@
 package com.onlinemarketplace.marketplaceservice.model;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
-import org.hibernate.annotations.GeneratorType;
+import jakarta.persistence.*;
 
+@Entity
 public class Product {
     @Id
-    @SequenceGenerator(
-            name="product_sequence",
-            allocationSize = 1
-    )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "product_sequence"
-    )
-    private Long productId;
+    private Integer product_id;
     private String name;
     private String description;
     private Integer price;
@@ -25,7 +14,7 @@ public class Product {
     @Override
     public String toString() {
         return "Product{" +
-                "productId=" + productId +
+                "productId=" + product_id +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", price=" + price +
@@ -33,12 +22,12 @@ public class Product {
                 '}';
     }
 
-    public Long getProductId() {
-        return productId;
+    public Integer getProductId() {
+        return product_id;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setProductId(Integer productId) {
+        this.product_id = productId;
     }
 
     public String getName() {
@@ -65,11 +54,11 @@ public class Product {
         this.price = price;
     }
 
-    public Integer getStock_quantity() {
+    public Integer getStockQuantity() {
         return stock_quantity;
     }
 
-    public void setStock_quantity(Integer stock_quantity) {
+    public void setStockQuantity(Integer stock_quantity) {
         this.stock_quantity = stock_quantity;
     }
 }

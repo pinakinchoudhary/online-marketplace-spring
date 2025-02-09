@@ -19,6 +19,8 @@ public class AccountServiceController {
         this.userRepository = userRepository;
     }
 
+    // TODO: Handle a PUT request for updating the discount_valid field
+
     @PostMapping(value = "/users", consumes = "application/json")
     public ResponseEntity<String> createAccount(@RequestBody User user) {
         // Changed ResponseEntity<User> to <String> to be able to return email already exists error.
@@ -31,7 +33,7 @@ public class AccountServiceController {
     }
 
     @GetMapping(path = "/users/{userId}")
-    public ResponseEntity<String> getAccount(@PathVariable Long userId) {
+    public ResponseEntity<String> getAccount(@PathVariable Integer userId) {
         Optional<User> user = userRepository.findByUserID(userId);
         if (user.isPresent()) {
             return new ResponseEntity<>(user.get().toString(), HttpStatus.OK);
@@ -41,7 +43,7 @@ public class AccountServiceController {
     }
 
     @DeleteMapping(path="/users/{id}")
-    public ResponseEntity<String> deleteAccount(@PathVariable Long id) {
+    public ResponseEntity<String> deleteAccount(@PathVariable Integer id) {
         Optional<User> user = userRepository.findByUserID(id);
         if (user.isPresent()) {
             userRepository.deleteByUserID(user.get().getUserID());

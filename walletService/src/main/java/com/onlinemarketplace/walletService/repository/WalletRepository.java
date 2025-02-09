@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface WalletRepository extends JpaRepository<Wallet, Long> {
+public interface WalletRepository extends JpaRepository<Wallet, Integer> {
 
     @Query("SELECT b FROM Wallet b WHERE b.user_id = :userID")
     Optional<Wallet> findByUserId(Integer userID);
