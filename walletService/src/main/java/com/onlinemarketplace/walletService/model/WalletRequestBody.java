@@ -6,7 +6,7 @@ public class WalletRequestBody {
 
     @Override
     public String toString() {
-        return "WalletRequestBody{" +
+        return "{" +
                 "action='" + action + '\'' +
                 ", amount=" + amount +
                 '}';

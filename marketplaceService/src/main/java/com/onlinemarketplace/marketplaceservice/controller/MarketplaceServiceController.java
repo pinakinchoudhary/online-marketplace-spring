@@ -1,16 +1,16 @@
 package com.onlinemarketplace.marketplaceservice.controller;
 
-import com.onlinemarketplace.marketplaceservice.model.Order;
-import com.onlinemarketplace.marketplaceservice.model.OrderItem;
-import com.onlinemarketplace.marketplaceservice.model.OrderRequestBody;
-import com.onlinemarketplace.marketplaceservice.model.Product;
+import com.onlinemarketplace.marketplaceservice.model.*;
 import com.onlinemarketplace.marketplaceservice.repository.OrderItemRepository;
 import com.onlinemarketplace.marketplaceservice.repository.OrderRepository;
 import com.onlinemarketplace.marketplaceservice.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +23,16 @@ public class MarketplaceServiceController {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
-    public MarketplaceServiceController(ProductRepository productRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository) {
+    private final RestClient restClient;
+    private static final String baseURI = "http://host.docker.internal";
+    private static String accountServiceEndpoint = ":8080/api/v1";
+    private static String walletServiceEndpoint = ":8082/api/v1";
+
+    public MarketplaceServiceController(ProductRepository productRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, RestClient restClient) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.restClient = restClient;
     }
 
     @GetMapping("/products")
@@ -46,7 +52,18 @@ public class MarketplaceServiceController {
 
     @PostMapping(value = "/orders", consumes = "application/json")
     public ResponseEntity<String> addOrder(@RequestBody OrderRequestBody orderRequestBody) {
-        // TODO: Send request to AccountService GET /users/{user_id} and check
+        // Send request to AccountService GET /users/{user_id} and check
+        User user;
+        try {
+            user = restClient.get()
+                    .uri(baseURI + accountServiceEndpoint + "/users/" + orderRequestBody.getUser_id())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .body(User.class);
+        } catch (RestClientException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         // Assuming a valid user_id
         int totalCost = 0;
         for (OrderItem orderItem : orderRequestBody.getItems()) {
@@ -56,9 +73,22 @@ public class MarketplaceServiceController {
                 totalCost += productRepository.findByProduct_id(orderItem.getProductId()).get().getProductId() * orderItem.getQuantity()
             }
         }
-        // TODO: If discount valid, deduct 10%
+        //  If discount valid, deduct 10%
+        if (user.getDiscount_valid()) {
+            totalCost -= (int) (totalCost * 0.1);
+        }
 
-        // TODO: Call wallet service to deduct the amount, if insuffiecient balance return 400.
+        //  Call wallet service to deduct the amount, if insufficient balance return 400.
+        try {
+            ResponseEntity<Void> deductBalance = restClient.put()
+                    .uri(baseURI + walletServiceEndpoint + "/wallets/" + user.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"action\":\"debit\", \"balance\":" + totalCost + "}")
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         // If debit succeeds
         for (OrderItem orderItem : orderRequestBody.getItems()) {
@@ -66,9 +96,33 @@ public class MarketplaceServiceController {
             product.setStockQuantity(product.getStockQuantity() - orderItem.getQuantity());
             productRepository.save(product);
         }
-        // TODO: Set discount_valid=false for {user_id} using PUT endpoint
+        //  Set discount_valid=false for {user_id} using PUT endpoint
+        if (user.getDiscount_valid()) {
+            try {
+                user.setDiscount_valid(false);
+                ResponseEntity<Void> updateDiscount = restClient.put()
+                        .uri(baseURI + accountServiceEndpoint + "user/" + user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(user.toString())
+                        .retrieve()
+                        .toBodilessEntity();
+            } catch (RestClientException e) {
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
 
-        // TODO further
+        // Create Order record
+        Order order = new Order();
+        order.setUserId(user.getId());
+        order.setTotalPrice(totalCost);
+        order.setStatus("PLACED");
+        try {
+            orderRepository.save(order);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        // prepare a string to return as payload
+        String orderRecord =
     }
 
 }

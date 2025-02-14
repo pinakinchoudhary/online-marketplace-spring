@@ -18,9 +18,16 @@ public class OrderItem {
     @ManyToOne
     @JoinColumn(name = "order_id")
     private Order order;
-
     private Integer product_id;
     private Integer quantity;
+
+    @Override
+    public String toString() {
+        return '{' +
+                "product_id=" + product_id +
+                ", quantity=" + quantity +
+                '}';
+    }
 
     public Integer getId() {
         return id;
@@ -38,9 +45,7 @@ public class OrderItem {
         this.order = order;
     }
 
-    public Integer getProductId() {
-        return product_id;
-    }
+    public Integer getProductId() {return product_id;}
 
     public void setProductId(Integer product_id) {
         this.product_id = product_id;

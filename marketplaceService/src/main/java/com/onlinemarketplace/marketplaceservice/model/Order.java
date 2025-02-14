@@ -2,6 +2,10 @@ package com.onlinemarketplace.marketplaceservice.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+
+import java.util.List;
 
 @Entity
 public class Order {
@@ -10,6 +14,15 @@ public class Order {
     private Integer user_id;
     private Integer total_price;
     private String status;
+    @OneToMany
+    private List<OrderItem> order_items;
+
+    
+
+    // Getter & Setters
+    public List<OrderItem> getOrder_items() {return order_items;}
+
+    public void setOrder_items(List<OrderItem> order_items) {this.order_items = order_items;}
 
     public Integer getOrderId() {
         return order_id;
