@@ -1,10 +1,17 @@
 package com.onlinemarketplace.marketplaceservice.model;
 
+import jakarta.persistence.*;
+
+
+
 public class User {
+
     private Integer id;
+    // Note: This works because in Payload JSON, id field is not present, it's auto-generated. All other names in payload
+    // must match the ones defined here!
     private String name;
     private String email;
-    private Boolean discount_valid = false;
+    private Boolean discount_availed = false;
 
     public Integer getId() {
         return id;
@@ -30,11 +37,11 @@ public class User {
         this.email = email;
     }
 
-    public Boolean getDiscount_valid() {
-        return discount_valid;
+    public Boolean getDiscount_availed() {
+        return discount_availed;
     }
 
-    public void setDiscount_valid(Boolean discount_valid) {
-        this.discount_valid = discount_valid;
+    public void setDiscount_availed(Boolean discount_availed) {
+        this.discount_availed = discount_availed;
     }
 }

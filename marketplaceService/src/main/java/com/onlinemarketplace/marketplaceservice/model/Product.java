@@ -1,33 +1,24 @@
 package com.onlinemarketplace.marketplaceservice.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 @Entity
 public class Product {
+
     @Id
-    private Integer product_id;
+    private Integer id;
     private String name;
     private String description;
     private Integer price;
     private Integer stock_quantity;
 
-    @Override
-    public String toString() {
-        return "Product{" +
-                "productId=" + product_id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", price=" + price +
-                ", stock_quantity=" + stock_quantity +
-                '}';
+    public Integer getId() {
+        return id;
     }
 
-    public Integer getProductId() {
-        return product_id;
-    }
-
-    public void setProductId(Integer productId) {
-        this.product_id = productId;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -54,11 +45,15 @@ public class Product {
         this.price = price;
     }
 
-    public Integer getStockQuantity() {
+    public Integer getStock_quantity() {
         return stock_quantity;
     }
 
-    public void setStockQuantity(Integer stock_quantity) {
+    public void setStock_quantity(Integer stock_quantity) {
         this.stock_quantity = stock_quantity;
     }
 }
+
+
+
+

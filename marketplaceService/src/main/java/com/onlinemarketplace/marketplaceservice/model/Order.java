@@ -1,50 +1,50 @@
 package com.onlinemarketplace.marketplaceservice.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 
 import java.util.List;
 
 @Entity
 public class Order {
     @Id
+    @SequenceGenerator(
+            name = "order_generator",
+            allocationSize = 1
+    )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "order_generator"
+    )
+    @Column(name = "order_id")
     private Integer order_id;
     private Integer user_id;
     private Integer total_price;
     private String status;
+
     @OneToMany
-    private List<OrderItem> order_items;
+    List<OrderItem> orderItems;
 
-    
-
-    // Getter & Setters
-    public List<OrderItem> getOrder_items() {return order_items;}
-
-    public void setOrder_items(List<OrderItem> order_items) {this.order_items = order_items;}
-
-    public Integer getOrderId() {
+    public Integer getOrder_id() {
         return order_id;
     }
 
-    public void setOrderId(Integer order_id) {
-        this.order_id = order_id;
+    public void setOrder_id(Integer id) {
+        this.order_id = id;
     }
 
-    public Integer getUserId() {
+    public Integer getUser_id() {
         return user_id;
     }
 
-    public void setUserId(Integer user_id) {
+    public void setUser_id(Integer user_id) {
         this.user_id = user_id;
     }
 
-    public Integer getTotalPrice() {
+    public Integer getTotal_price() {
         return total_price;
     }
 
-    public void setTotalPrice(Integer total_price) {
+    public void setTotal_price(Integer total_price) {
         this.total_price = total_price;
     }
 
@@ -54,5 +54,13 @@ public class Order {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
     }
 }

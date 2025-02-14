@@ -1,5 +1,6 @@
 package com.onlinemarketplace.marketplaceservice.controller;
 
+
 import com.onlinemarketplace.marketplaceservice.model.*;
 import com.onlinemarketplace.marketplaceservice.repository.OrderItemRepository;
 import com.onlinemarketplace.marketplaceservice.repository.OrderRepository;
@@ -12,117 +13,216 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(path = "api/v1")
 public class MarketplaceServiceController {
-    private final ProductRepository productRepository;
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-
+    private final ProductRepository productRepository;
     private final RestClient restClient;
-    private static final String baseURI = "http://host.docker.internal";
-    private static String accountServiceEndpoint = ":8080/api/v1";
-    private static String walletServiceEndpoint = ":8082/api/v1";
+    private static final String baseURI = "http://localhost";
+    private static final String accountServiceEndpoint = ":8080/users/";
+    private static final String discountUpdateEndpoint = ":8080/updateDiscount/";
+    private static final String walletServiceEndpoint = ":8082/wallets/";
 
-    public MarketplaceServiceController(ProductRepository productRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, RestClient restClient) {
-        this.productRepository = productRepository;
+    @Autowired
+    public MarketplaceServiceController(OrderRepository orderRepository, OrderItemRepository orderItemRepository, ProductRepository productRepository, RestClient restClient) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.productRepository = productRepository;
         this.restClient = restClient;
     }
 
+
     @GetMapping("/products")
-    public ResponseEntity<List<Product>> getAllProducts() {
-        return new ResponseEntity<>(productRepository.findAll(), HttpStatus.OK);
+    public ResponseEntity<?> getAllProducts() {
+        List<Product> productList = productRepository.findAll();
+
+        return new ResponseEntity<>(productList, HttpStatus.OK);
     }
 
-    @GetMapping("products/{productId}")
-    public ResponseEntity<String> getProductById(@PathVariable Integer productId) {
-        Optional<Product> product = productRepository.findByProduct_id(productId);
-        if (product.isPresent()) {
-            return new ResponseEntity<>(product.get().toString(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("Product not found!", HttpStatus.NOT_FOUND);
+    @GetMapping("/products/{product_id}")
+    public ResponseEntity<?> getProductById(@PathVariable Integer product_id) {
+        Optional<Product> productOptional = productRepository.findById(product_id);
+        if (productOptional.isPresent()) {
+            return new ResponseEntity<>(productOptional.get(), HttpStatus.OK);
         }
+        return new ResponseEntity<>("Product not found!", HttpStatus.NOT_FOUND);
     }
 
     @PostMapping(value = "/orders", consumes = "application/json")
-    public ResponseEntity<String> addOrder(@RequestBody OrderRequestBody orderRequestBody) {
-        // Send request to AccountService GET /users/{user_id} and check
-        User user;
+    public ResponseEntity<?> addOrder(@RequestBody Order order) {
+
+        ResponseEntity<User> accountServiceResponse;
         try {
-            user = restClient.get()
-                    .uri(baseURI + accountServiceEndpoint + "/users/" + orderRequestBody.getUser_id())
+            accountServiceResponse = restClient.get()
+                    .uri(baseURI + accountServiceEndpoint + order.getUser_id())
                     .accept(MediaType.APPLICATION_JSON)
                     .retrieve()
-                    .body(User.class);
+                    .toEntity(User.class);
         } catch (RestClientException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
-        // Assuming a valid user_id
+        System.out.println("CHECKKKKKKKK\nKKKKKKKKKKKK\nKKKKKKKKKKKKKK");
+
         int totalCost = 0;
-        for (OrderItem orderItem : orderRequestBody.getItems()) {
-            if (productRepository.getStockQuantityByProduct_id(orderItem.getProductId()).get() < orderItem.getQuantity()) {
-                return new ResponseEntity<>("Stock not available!", HttpStatus.BAD_REQUEST);
-            } else {
-                totalCost += productRepository.findByProduct_id(orderItem.getProductId()).get().getProductId() * orderItem.getQuantity()
+        for (OrderItem orderItem : order.getOrderItems()) {
+            if (orderItem.getQuantity() > productRepository.findStock_quantityByProduct_id(orderItem.getProduct_id()).get()) {
+
+                return new ResponseEntity<>("Out of Stock!", HttpStatus.BAD_REQUEST);
             }
-        }
-        //  If discount valid, deduct 10%
-        if (user.getDiscount_valid()) {
-            totalCost -= (int) (totalCost * 0.1);
+            totalCost += orderItem.getQuantity() * productRepository.findPriceById(orderItem.getProduct_id()).get();
         }
 
-        //  Call wallet service to deduct the amount, if insufficient balance return 400.
-        try {
-            ResponseEntity<Void> deductBalance = restClient.put()
-                    .uri(baseURI + walletServiceEndpoint + "/wallets/" + user.getId())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"action\":\"debit\", \"balance\":" + totalCost + "}")
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (RestClientException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        if (!accountServiceResponse.getBody().getDiscount_availed()) {
+
+            totalCost = (int)(totalCost * 0.9);
+
         }
 
-        // If debit succeeds
-        for (OrderItem orderItem : orderRequestBody.getItems()) {
-            Product product = productRepository.findByProduct_id(orderItem.getProductId()).get();
-            product.setStockQuantity(product.getStockQuantity() - orderItem.getQuantity());
-            productRepository.save(product);
-        }
-        //  Set discount_valid=false for {user_id} using PUT endpoint
-        if (user.getDiscount_valid()) {
-            try {
-                user.setDiscount_valid(false);
-                ResponseEntity<Void> updateDiscount = restClient.put()
-                        .uri(baseURI + accountServiceEndpoint + "user/" + user.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(user.toString())
-                        .retrieve()
-                        .toBodilessEntity();
-            } catch (RestClientException e) {
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+        ResponseEntity<Void> walletServiceResponse = restClient.put()
+                .uri(baseURI + walletServiceEndpoint + order.getUser_id())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new WalletRequestBody("debit", totalCost))
+                .retrieve()
+                .toBodilessEntity();
+
+        if(walletServiceResponse.getStatusCode() != HttpStatus.OK) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
-        // Create Order record
-        Order order = new Order();
-        order.setUserId(user.getId());
-        order.setTotalPrice(totalCost);
+        ResponseEntity<Void> discountResponse = restClient.put()
+                .uri(baseURI + discountUpdateEndpoint + order.getUser_id())
+                .retrieve()
+                .toBodilessEntity();
+        if (discountResponse.getStatusCode() != HttpStatus.OK) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        for (OrderItem orderItem : order.getOrderItems()) {
+            productRepository.decreaseStockQuantityByProduct_id(orderItem.getProduct_id(), orderItem.getQuantity());
+        }
+        order.setTotal_price(totalCost);
         order.setStatus("PLACED");
         try {
             orderRepository.save(order);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // prepare a string to return as payload
-        String orderRecord =
+
+        return new ResponseEntity<Order>(order, HttpStatus.CREATED);
     }
 
+    @GetMapping("/orders/{order_id}")
+    public ResponseEntity<?> getOrderById(@PathVariable Integer order_id) {
+        Optional<Order> order = orderRepository.findById(order_id);
+        if (order.isPresent()) {
+            return new ResponseEntity<>(order.get(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>("Order not found!", HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/orders/users/{user_id}")
+    public ResponseEntity<?> getOrdersByUserId(@PathVariable Integer user_id) {
+        List<Order> orders = orderRepository.findAllByUserId(user_id);
+        return new ResponseEntity<>(orders, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/orders/{order_id}")
+    public ResponseEntity<?> deleteOrderById(@PathVariable Integer order_id) {
+        Optional<Order> order = orderRepository.findById(order_id);
+        if (order.isPresent()) {
+            if (order.get().getStatus().equals("PLACED")) {
+                order.get().setStatus("CANCELLED");
+
+                for (OrderItem orderItem : order.get().getOrderItems()) {
+                    productRepository.increaseStockQuantityByProduct_id(orderItem.getProduct_id(), orderItem.getQuantity());
+                }
+
+                ResponseEntity<Void> walletServiceResponse = restClient.put()
+                        .uri(baseURI + walletServiceEndpoint + order.get().getUser_id())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(new WalletRequestBody("credit", order.get().getTotal_price()))
+                        .retrieve()
+                        .toBodilessEntity();
+                if (walletServiceResponse.getStatusCode() != HttpStatus.OK) {
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                }
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+            return new ResponseEntity<>("Order Cancelled or Delivered!", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>("Order not found!", HttpStatus.BAD_REQUEST);
+    }
+
+
+    @PutMapping(value = "/orders/{order_id}", consumes = "application/json")
+    public ResponseEntity<?> updateOrder(@PathVariable Integer order_id, @RequestBody Order order) {
+        Optional<Order> orderOptional = orderRepository.findById(order_id);
+        if (orderOptional.isPresent() && orderOptional.get().getStatus().equals("PLACED")) {
+            orderRepository.updateStatusByOrder_id(order_id, "DELIVERED");
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
+    @DeleteMapping("/marketplace/users/{user_id}")
+    public ResponseEntity<?> deleteMarketplaceById(@PathVariable Integer user_id) {
+        List<Order> orders = orderRepository.findAllByUserId(user_id);
+        if (!orders.isEmpty()) {
+            for (Order order : orders) {
+//                ResponseEntity<Void> marketplaceResponse = restClient.delete()
+//                        .uri(baseURI + "/orders/users/" + order.getUser_id())
+//                        .retrieve()
+//                        .toBodilessEntity();
+//                if (marketplaceResponse.getStatusCode() != HttpStatus.OK) {
+//                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+//                }
+                deleteOrderById(order.getOrder_id());
+            }
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Order not found!", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @DeleteMapping("/marketplace")
+    public ResponseEntity<?> deleteMarketplace() {
+        List<Order> orders = orderRepository.findAll();
+        for (Order order : orders) {
+//            ResponseEntity<Void> marketplaceResponse = restClient.delete()
+//                    .uri(baseURI + "/orders/users/" + order.getUser_id())
+//                    .retrieve()
+//                    .toBodilessEntity();
+//            if (marketplaceResponse.getStatusCode() != HttpStatus.OK) {
+//                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+//            }
+            deleteOrderById(order.getOrder_id());
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

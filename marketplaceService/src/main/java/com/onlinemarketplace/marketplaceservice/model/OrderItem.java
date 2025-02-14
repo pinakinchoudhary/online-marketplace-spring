@@ -1,33 +1,26 @@
 package com.onlinemarketplace.marketplaceservice.model;
 
+
 import jakarta.persistence.*;
 
 @Entity
 public class OrderItem {
+
     @Id
     @SequenceGenerator(
-            name="user_sequence",
+            name = "order_item_generator",
             allocationSize = 1
     )
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,
-            generator = "user_sequence"
+            generator = "order_item_generator"
     )
     private Integer id;
-
     @ManyToOne
     @JoinColumn(name = "order_id")
-    private Order order;
+    private Order order_id;
     private Integer product_id;
     private Integer quantity;
-
-    @Override
-    public String toString() {
-        return '{' +
-                "product_id=" + product_id +
-                ", quantity=" + quantity +
-                '}';
-    }
 
     public Integer getId() {
         return id;
@@ -37,17 +30,19 @@ public class OrderItem {
         this.id = id;
     }
 
-    public Order getOrder() {
-        return order;
+    public Order getOrder_id() {
+        return order_id;
     }
 
-    public void setOrder(Order order) {
-        this.order = order;
+    public void setOrder_id(Order order_id) {
+        this.order_id = order_id;
     }
 
-    public Integer getProductId() {return product_id;}
+    public Integer getProduct_id() {
+        return product_id;
+    }
 
-    public void setProductId(Integer product_id) {
+    public void setProduct_id(Integer product_id) {
         this.product_id = product_id;
     }
 
