@@ -10,6 +10,6 @@ import java.util.Optional;
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, Integer> {
 
-    @Query("SELECT b FROM Wallet b WHERE b.user_id = :userID")
-    Optional<Wallet> findByUserId(Integer userID);
+    @Query("SELECT w FROM Wallet w WHERE w.user_id = :user_id")
+    Optional<Wallet> findByUser_id(Integer user_id);
 }

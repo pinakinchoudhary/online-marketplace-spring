@@ -4,14 +4,6 @@ public class WalletRequestBody {
     private String action;
     private Integer amount;
 
-    @Override
-    public String toString() {
-        return "{" +
-                "action='" + action + '\'' +
-                ", amount=" + amount +
-                '}';
-    }
-
     public String getAction() {
         return action;
     }

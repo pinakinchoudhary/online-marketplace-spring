@@ -14,30 +14,30 @@ public class User {
             strategy = GenerationType.SEQUENCE,
             generator = "user_sequence"
     )
-    private Integer userID;
+    private Integer id;
     // Note: This works because in Payload JSON, id field is not present, it's auto-generated. All other names in payload
     // must match the ones defined here!
     private String name;
     @Column(unique=true)
     private String email;
-    private Boolean discount_valid = false;
+    private Boolean discount_availed = false;
 
     @Override
     public String toString() {
-        return "AccountUser{" +
-                "id=" + userID +
+        return '{' +
+                "id:" + id +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
-                ", discount_valid=" + discount_valid +
+                ", discount_availed=" + discount_availed +
                 '}';
     }
 
-    public Integer getUserID() {
-        return userID;
+    public Integer getId() {
+        return id;
     }
 
-    public void setUserID(Integer id) {
-        this.userID = id;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -56,11 +56,11 @@ public class User {
         this.email = email;
     }
 
-    public Boolean getDiscount_valid() {
-        return discount_valid;
+    public Boolean getDiscount_availed() {
+        return discount_availed;
     }
 
-    public void setDiscount_valid(Boolean discount_valid) {
-        this.discount_valid = discount_valid;
+    public void setDiscount_availed(Boolean discount_availed) {
+        this.discount_availed = discount_availed;
     }
 }

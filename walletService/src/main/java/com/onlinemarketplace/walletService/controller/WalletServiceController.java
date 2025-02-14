@@ -19,49 +19,49 @@ public class WalletServiceController {
         this.walletRepository = walletRepository;
     }
 
-    @GetMapping(path = "wallets/{userId}")
-    public ResponseEntity<String> getWallet(@PathVariable("userId") Integer userId) {
-        Optional<Wallet> wallet = walletRepository.findByUserId(userId);
+    @GetMapping(path = "wallets/{user_id}")
+    public ResponseEntity<?> getWallet(@PathVariable("user_id") Integer user_id) {
+        Optional<Wallet> wallet = walletRepository.findByUser_id(user_id);
         if (wallet.isPresent()) {
-            return new ResponseEntity<>(wallet.get().toString(), HttpStatus.OK);
+            return new ResponseEntity<>(wallet.get(), HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Wallet not found!", HttpStatus.NOT_FOUND);
         }
     }
 
     @PutMapping(value = "/wallets/{user_id}", consumes = "application/json")
-    public ResponseEntity<String> updateWallet(@PathVariable("user_id") Integer userId, @RequestBody WalletRequestBody walletRequestBody) {
-        Optional<Wallet> walletOptional = walletRepository.findByUserId(userId);
+    public ResponseEntity<?> updateWallet(@PathVariable("user_id") Integer user_id, @RequestBody WalletRequestBody walletRequestBody) {
+        Optional<Wallet> walletOptional = walletRepository.findByUser_id(user_id);
         Wallet wallet = walletOptional.orElseGet(Wallet::new);
-        wallet.setUser_id(userId);
+        wallet.setUser_id(user_id);
         if (walletRequestBody.getAction().equals("credit")) {
             wallet.setBalance(wallet.getBalance() + walletRequestBody.getAmount());
         } else if (walletRequestBody.getAction().equals("debit")) {
             if (wallet.getBalance() < walletRequestBody.getAmount()) {
                 walletRepository.save(wallet);
-                return new ResponseEntity<>("You don't have enough money!", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Insufficient Balance!", HttpStatus.BAD_REQUEST);
             } else {
                 wallet.setBalance(wallet.getBalance() - walletRequestBody.getAmount());
             }
         }
         walletRepository.save(wallet);
-        return new ResponseEntity<>(wallet.toString(), HttpStatus.OK);
+        return new ResponseEntity<>("Current Balance: " + wallet.getBalance(), HttpStatus.OK);
     }
 
-    @DeleteMapping(path = "/wallets/{userId}")
-    public ResponseEntity<String> deleteWallet(@PathVariable("userId") Integer userId) {
-        Optional<Wallet> walletOptional = walletRepository.findByUserId(userId);
+    @DeleteMapping(path = "/wallets/{user_id}")
+    public ResponseEntity<?> deleteWallet(@PathVariable("user_id") Integer user_id) {
+        Optional<Wallet> walletOptional = walletRepository.findByUser_id(user_id);
         if (walletOptional.isPresent()) {
-            walletRepository.delete(walletOptional.get());
-            return new ResponseEntity<>(walletOptional.get().toString(), HttpStatus.OK);
+            walletRepository.deleteById(user_id);
+            return new ResponseEntity<>("Wallet has been deleted!", HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Wallet not found!", HttpStatus.NOT_FOUND);
         }
     }
 
     @DeleteMapping(path = "/wallets")
-    public ResponseEntity<String> deleteWallets() {
+    public ResponseEntity<?> deleteWallets() {
         walletRepository.deleteAll();
-        return new ResponseEntity<>("Wallets deleted!", HttpStatus.OK);
+        return new ResponseEntity<>("All wallets deleted!", HttpStatus.OK);
     }
 }

@@ -8,11 +8,6 @@ import org.springframework.web.client.RestClient;
 @SpringBootApplication
 public class WalletServiceApplication {
 
-	@Bean
-	public RestClient restClient() {
-		return RestClient.builder().build();
-	}
-
 	public static void main(String[] args) {
 		SpringApplication.run(WalletServiceApplication.class, args);
 	}

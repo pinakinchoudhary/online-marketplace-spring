@@ -9,14 +9,6 @@ public class Wallet {
     private Integer user_id;
     private Integer balance = 0;
 
-    @Override
-    public String toString() {
-        return "{" +
-                "user_id=" + user_id +
-                ", balance=" + balance +
-                '}';
-    }
-
     public Integer getUser_id() {
         return user_id;
     }

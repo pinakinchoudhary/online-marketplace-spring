@@ -27,44 +27,44 @@ public class AccountServiceController {
     }
 
     // Handle a PUT request for updating the discount_valid field
-    @PutMapping(value = "/users", consumes = "application/json")
-    public ResponseEntity<String> updateDiscount(@RequestBody User user) {
-        if (userRepository.findByUserID(user.getUserID()).isPresent()) {
-            return new ResponseEntity<>("No such User exists!", HttpStatus.BAD_REQUEST);
+    @PutMapping("/updateDiscount/{id}")
+    public ResponseEntity<?> discount(@PathVariable("id") Integer id) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isPresent()) {
+            userRepository.updateDiscountValidById(user.get().getId(), true);
+            return new ResponseEntity<>("Discount successfully updated!", HttpStatus.OK);
         }
-        userRepository.save(user);
-        return new ResponseEntity<>("Discount updated successfully!", HttpStatus.OK);
+        return new ResponseEntity<>("User not found!", HttpStatus.NOT_FOUND);
     }
 
     @PostMapping(value = "/users", consumes = "application/json")
-    public ResponseEntity<String> createAccount(@RequestBody User user) {
-        // Changed ResponseEntity<User> to <String> to be able to return email already exists error.
+    public ResponseEntity<?> createAccount(@RequestBody User user) {
         if (userRepository.findByEmail(user.getEmail()).isEmpty()) {
             userRepository.save(user);
-            return new ResponseEntity<>(user.toString() + " Added!", HttpStatus.OK);
+            return new ResponseEntity<>(user, HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Email already exists!", HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping(path = "/users/{userId}")
-    public ResponseEntity<String> getAccount(@PathVariable Integer userId) {
-        Optional<User> user = userRepository.findByUserID(userId);
+    public ResponseEntity<?> getAccount(@PathVariable Integer userId) {
+        Optional<User> user = userRepository.findById(userId);
         if (user.isPresent()) {
-            return new ResponseEntity<>(user.get().toString(), HttpStatus.OK);
+            return new ResponseEntity<>(user.get(), HttpStatus.OK);
         } else {
             return new ResponseEntity<>("User not found!", HttpStatus.NOT_FOUND);
         }
     }
 
-    @DeleteMapping(path= "/users/{userId}")
-    public ResponseEntity<String> deleteAccount(@PathVariable Integer userId) {
-        Optional<User> user = userRepository.findByUserID(userId);
+    @DeleteMapping(path= "/users/{id}")
+    public ResponseEntity<?> deleteAccount(@PathVariable Integer id) {
+        Optional<User> user = userRepository.findById(id);
         if (user.isPresent()) {
-            userRepository.deleteByUserID(user.get().getUserID());
+            userRepository.deleteById(id);
             //  DELETE /marketplace/users/{userId} to delete cancel and remove user's orders
             ResponseEntity<String> response = restClient.delete()
-                    .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + userId)
+                    .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
                     .retrieve()
                     .toEntity(String.class);
             if (response.getStatusCode() != HttpStatus.OK) {
@@ -72,16 +72,15 @@ public class AccountServiceController {
             }
             //  DELETE /wallet/{userId}
             response = restClient.delete()
-                    .uri(baseURI + walletServiceEndpoint + "/wallets/" + userId)
+                    .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
                     .retrieve()
                     .toEntity(String.class);
             if (response.getStatusCode() != HttpStatus.OK) {
                 return new ResponseEntity<>("Wallet deletion unsuccessful!", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
-            return new ResponseEntity<>(user.get().toString() + " Deleted!", HttpStatus.OK);
+            return new ResponseEntity<>(user.get() + "Wallet Deleted!", HttpStatus.OK);
         } else {
-            return new ResponseEntity<>("No such User exists!", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("User not found!", HttpStatus.NOT_FOUND);
         }
     }
 
