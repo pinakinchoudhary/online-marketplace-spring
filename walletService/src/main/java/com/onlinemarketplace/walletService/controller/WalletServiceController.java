@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(path = "api/v1")
 public class WalletServiceController {
     private final WalletRepository walletRepository;
     @Autowired

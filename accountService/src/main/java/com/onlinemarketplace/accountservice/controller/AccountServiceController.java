@@ -12,13 +12,12 @@ import org.springframework.web.client.RestClient;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(path = "api/v1")
 public class AccountServiceController {
     private final UserRepository userRepository;
     private final RestClient restClient;
-    private static final String baseURI = "http://host.docker.internal";
-    private static final String marketplaceServiceEndpoint = ":8081/api/v1";
-    private static final String walletServiceEndpoint = ":8082/api/v1/";
+    private static final String baseURI = "http://localhost";
+    private static final String marketplaceServiceEndpoint = ":8081";
+    private static final String walletServiceEndpoint = ":8082";
 
     @Autowired
     public AccountServiceController(UserRepository userRepository, RestClient restClient) {
