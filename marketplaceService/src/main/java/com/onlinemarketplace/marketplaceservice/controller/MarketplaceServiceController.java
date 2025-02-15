@@ -55,7 +55,6 @@ public class MarketplaceServiceController {
 
     @PostMapping(value = "/orders", consumes = "application/json")
     public ResponseEntity<?> addOrder(@RequestBody Order order) {
-
         ResponseEntity<User> accountServiceResponse;
         try {
             accountServiceResponse = restClient.get()
@@ -67,10 +66,8 @@ public class MarketplaceServiceController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
-        System.out.println("CHECKKKKKKKK\nKKKKKKKKKKKK\nKKKKKKKKKKKKKK");
-
         int totalCost = 0;
-        for (OrderItem orderItem : order.getOrderItems()) {
+        for (OrderItem orderItem : order.getItems()) {
             if (orderItem.getQuantity() > productRepository.findStock_quantityByProduct_id(orderItem.getProduct_id()).get()) {
 
                 return new ResponseEntity<>("Out of Stock!", HttpStatus.BAD_REQUEST);
@@ -84,26 +81,27 @@ public class MarketplaceServiceController {
 
         }
 
-        ResponseEntity<Void> walletServiceResponse = restClient.put()
-                .uri(baseURI + walletServiceEndpoint + order.getUser_id())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(new WalletRequestBody("debit", totalCost))
-                .retrieve()
-                .toBodilessEntity();
-
-        if(walletServiceResponse.getStatusCode() != HttpStatus.OK) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        try {
+            ResponseEntity<Void> walletServiceResponse = restClient.put()
+                    .uri(baseURI + walletServiceEndpoint + order.getUser_id())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new WalletRequestBody("debit", totalCost))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
-        ResponseEntity<Void> discountResponse = restClient.put()
-                .uri(baseURI + discountUpdateEndpoint + order.getUser_id())
-                .retrieve()
-                .toBodilessEntity();
-        if (discountResponse.getStatusCode() != HttpStatus.OK) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        try {
+            ResponseEntity<Void> discountResponse = restClient.put()
+                    .uri(baseURI + discountUpdateEndpoint + order.getUser_id())
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
-        for (OrderItem orderItem : order.getOrderItems()) {
+        for (OrderItem orderItem : order.getItems()) {
             productRepository.decreaseStockQuantityByProduct_id(orderItem.getProduct_id(), orderItem.getQuantity());
         }
         order.setTotal_price(totalCost);
@@ -139,19 +137,21 @@ public class MarketplaceServiceController {
             if (order.get().getStatus().equals("PLACED")) {
                 order.get().setStatus("CANCELLED");
 
-                for (OrderItem orderItem : order.get().getOrderItems()) {
+                for (OrderItem orderItem : order.get().getItems()) {
                     productRepository.increaseStockQuantityByProduct_id(orderItem.getProduct_id(), orderItem.getQuantity());
                 }
 
-                ResponseEntity<Void> walletServiceResponse = restClient.put()
-                        .uri(baseURI + walletServiceEndpoint + order.get().getUser_id())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(new WalletRequestBody("credit", order.get().getTotal_price()))
-                        .retrieve()
-                        .toBodilessEntity();
-                if (walletServiceResponse.getStatusCode() != HttpStatus.OK) {
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                try {
+                    ResponseEntity<Void> walletServiceResponse = restClient.put()
+                            .uri(baseURI + walletServiceEndpoint + order.get().getUser_id())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .body(new WalletRequestBody("credit", order.get().getTotal_price()))
+                            .retrieve()
+                            .toBodilessEntity();
+                } catch (RestClientException e) {
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
                 }
+
                 return new ResponseEntity<>(HttpStatus.OK);
             }
             return new ResponseEntity<>("Order Cancelled or Delivered!", HttpStatus.BAD_REQUEST);

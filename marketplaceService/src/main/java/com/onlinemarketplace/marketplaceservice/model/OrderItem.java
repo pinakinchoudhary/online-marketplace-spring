@@ -17,8 +17,8 @@ public class OrderItem {
     )
     private Integer id;
     @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order_id;
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
     private Integer product_id;
     private Integer quantity;
 
@@ -30,12 +30,13 @@ public class OrderItem {
         this.id = id;
     }
 
-    public Order getOrder_id() {
-        return order_id;
-    }
+    // remove to prevent infinite jsonification from response entity
+//    public Order getOrder() {
+//        return order;
+//    }
 
-    public void setOrder_id(Order order_id) {
-        this.order_id = order_id;
+    public void setOrder(Order order) {
+        this.order = order;
     }
 
     public Integer getProduct_id() {

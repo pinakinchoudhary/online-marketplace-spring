@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Transactional
     @Modifying
-    @Query("UPDATE User u SET u.discount_availed = :discountValid WHERE u.id = :id")
-    void updateDiscountValidById(int id, boolean discountAvailed);
+    @Query("UPDATE User u SET u.discount_availed = :discountAvailed WHERE u.id = :id")
+    void updateDiscountAvailedByIdById(int id, boolean discountAvailed);
 
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
+@Table(name = "orders")
 public class Order {
     @Id
     @SequenceGenerator(
@@ -15,14 +16,13 @@ public class Order {
             strategy = GenerationType.SEQUENCE,
             generator = "order_generator"
     )
-    @Column(name = "order_id")
     private Integer order_id;
     private Integer user_id;
     private Integer total_price;
     private String status;
 
-    @OneToMany
-    List<OrderItem> orderItems;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    List<OrderItem> items; // changed from orderItems to items
 
     public Integer getOrder_id() {
         return order_id;
@@ -56,11 +56,23 @@ public class Order {
         this.status = status;
     }
 
-    public List<OrderItem> getOrderItems() {
-        return orderItems;
+    public List<OrderItem> getItems() {
+        return items;
     }
 
-    public void setOrderItems(List<OrderItem> orderItems) {
-        this.orderItems = orderItems;
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
+        items.forEach(item -> item.setOrder(this));
+    }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "order_id=" + order_id +
+                ", user_id=" + user_id +
+                ", total_price=" + total_price +
+                ", status='" + status + '\'' +
+                ", orderItems=" + items +
+                '}';
     }
 }

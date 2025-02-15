@@ -25,12 +25,12 @@ public class AccountServiceController {
         this.restClient = restClient;
     }
 
-    // Handle a PUT request for updating the discount_valid field
+    // Handle a PUT request for updating the discount_availed field
     @PutMapping("/updateDiscount/{id}")
     public ResponseEntity<?> discount(@PathVariable("id") Integer id) {
         Optional<User> user = userRepository.findById(id);
         if (user.isPresent()) {
-            userRepository.updateDiscountValidById(user.get().getId(), true);
+            userRepository.updateDiscountAvailedByIdById(user.get().getId(), true);
             return new ResponseEntity<>("Discount successfully updated!", HttpStatus.OK);
         }
         return new ResponseEntity<>("User not found!", HttpStatus.NOT_FOUND);
