@@ -6,14 +6,14 @@ import jakarta.persistence.*;
 @Table(name="account_user")
 public class User {
     @Id
-    @SequenceGenerator(
-            name="user_sequence",
-            allocationSize = 1
-    )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "user_sequence"
-    )
+//    @SequenceGenerator(
+//            name="user_sequence",
+//            allocationSize = 1
+//    )
+//    @GeneratedValue(
+//            strategy = GenerationType.SEQUENCE,
+//            generator = "user_sequence"
+//    )
     private Integer id;
     // Note: This works because in Payload JSON, id field is not present, it's auto-generated. All other names in payload
     // must match the ones defined here!

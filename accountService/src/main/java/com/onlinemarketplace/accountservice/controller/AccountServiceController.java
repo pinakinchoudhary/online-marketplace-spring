@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.util.Optional;
 
@@ -40,7 +42,7 @@ public class AccountServiceController {
     public ResponseEntity<?> createAccount(@RequestBody User user) {
         if (userRepository.findByEmail(user.getEmail()).isEmpty()) {
             userRepository.save(user);
-            return new ResponseEntity<>(user, HttpStatus.OK);
+            return new ResponseEntity<>(user, HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>("Email already exists!", HttpStatus.BAD_REQUEST);
         }
@@ -62,20 +64,21 @@ public class AccountServiceController {
         if (user.isPresent()) {
             userRepository.deleteById(id);
             //  DELETE /marketplace/users/{userId} to delete cancel and remove user's orders
-            ResponseEntity<String> response = restClient.delete()
-                    .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
-                    .retrieve()
-                    .toEntity(String.class);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                return new ResponseEntity<>("Marketplace deletion unsuccessful!", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-            //  DELETE /wallet/{userId}
-            response = restClient.delete()
-                    .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
-                    .retrieve()
-                    .toEntity(String.class);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                return new ResponseEntity<>("Wallet deletion unsuccessful!", HttpStatus.INTERNAL_SERVER_ERROR);
+            try {
+                ResponseEntity<String> marketplaceResponse = restClient.delete()
+                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
+                        .retrieve()
+                        .toEntity(String.class);
+
+                ResponseEntity<String> walletResponse = restClient.delete()
+                        .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
+                        .retrieve()
+                        .toEntity(String.class);
+
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
+                    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+                }
             }
             return new ResponseEntity<>(user.get() + "Wallet Deleted!", HttpStatus.OK);
         } else {

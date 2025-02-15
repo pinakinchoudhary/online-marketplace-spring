@@ -2,7 +2,6 @@ package com.onlinemarketplace.marketplaceservice.controller;
 
 
 import com.onlinemarketplace.marketplaceservice.model.*;
-import com.onlinemarketplace.marketplaceservice.repository.OrderItemRepository;
 import com.onlinemarketplace.marketplaceservice.repository.OrderRepository;
 import com.onlinemarketplace.marketplaceservice.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,6 @@ import java.util.Optional;
 public class MarketplaceServiceController {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final RestClient restClient;
     private static final String baseURI = "http://localhost";
@@ -29,9 +27,8 @@ public class MarketplaceServiceController {
     private static final String walletServiceEndpoint = ":8082/wallets/";
 
     @Autowired
-    public MarketplaceServiceController(OrderRepository orderRepository, OrderItemRepository orderItemRepository, ProductRepository productRepository, RestClient restClient) {
+    public MarketplaceServiceController(OrderRepository orderRepository, ProductRepository productRepository, RestClient restClient) {
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.restClient = restClient;
     }
@@ -165,8 +162,10 @@ public class MarketplaceServiceController {
         Optional<Order> orderOptional = orderRepository.findById(order_id);
         if (orderOptional.isPresent() && orderOptional.get().getStatus().equals("PLACED")) {
             orderRepository.updateStatusByOrder_id(order_id, "DELIVERED");
+            return new ResponseEntity<>("Order delivered Successfully!", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Order was CANCELLED!", HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     @DeleteMapping("/marketplace/users/{user_id}")
@@ -174,13 +173,6 @@ public class MarketplaceServiceController {
         List<Order> orders = orderRepository.findAllByUserId(user_id);
         if (!orders.isEmpty()) {
             for (Order order : orders) {
-//                ResponseEntity<Void> marketplaceResponse = restClient.delete()
-//                        .uri(baseURI + "/orders/users/" + order.getUser_id())
-//                        .retrieve()
-//                        .toBodilessEntity();
-//                if (marketplaceResponse.getStatusCode() != HttpStatus.OK) {
-//                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-//                }
                 deleteOrderById(order.getOrder_id());
             }
             return new ResponseEntity<>(HttpStatus.OK);
@@ -193,13 +185,6 @@ public class MarketplaceServiceController {
     public ResponseEntity<?> deleteMarketplace() {
         List<Order> orders = orderRepository.findAll();
         for (Order order : orders) {
-//            ResponseEntity<Void> marketplaceResponse = restClient.delete()
-//                    .uri(baseURI + "/orders/users/" + order.getUser_id())
-//                    .retrieve()
-//                    .toBodilessEntity();
-//            if (marketplaceResponse.getStatusCode() != HttpStatus.OK) {
-//                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-//            }
             deleteOrderById(order.getOrder_id());
         }
         return new ResponseEntity<>(HttpStatus.OK);
