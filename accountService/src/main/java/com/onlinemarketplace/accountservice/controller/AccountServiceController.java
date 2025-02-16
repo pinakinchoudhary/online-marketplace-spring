@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -30,81 +30,118 @@ public class AccountServiceController {
     // Handle a PUT request for updating the discount_availed field
     @PutMapping("/updateDiscount/{id}")
     public ResponseEntity<?> discount(@PathVariable("id") Integer id) {
-        Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()) {
-            userRepository.updateDiscountAvailedByIdById(user.get().getId(), true);
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, String.format("User not found with id %d", id)));
+            try {
+                userRepository.updateDiscountAvailedByIdById(user.getId(), true);
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Discount update failed!");
+            }
             return new ResponseEntity<>("Discount successfully updated!", HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<String>(e.getMessage(), e.getStatusCode());
         }
-        return new ResponseEntity<>("User not found!", HttpStatus.NOT_FOUND);
     }
 
     @PostMapping(value = "/users", consumes = "application/json")
     public ResponseEntity<?> createAccount(@RequestBody User user) {
-        if (userRepository.findByEmail(user.getEmail()).isEmpty()) {
-            userRepository.save(user);
-            return new ResponseEntity<>(user, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>("Email already exists!", HttpStatus.BAD_REQUEST);
+        try {
+            if (userRepository.findByEmail(user.getEmail()).isEmpty()) {
+                try {
+                    userRepository.save(user);
+                } catch (Exception e) {
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User creation failed!");
+                }
+                return new ResponseEntity<>(user, HttpStatus.CREATED);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists!");
+            }
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
         }
     }
 
     @GetMapping(path = "/users/{userId}")
     public ResponseEntity<?> getAccount(@PathVariable Integer userId) {
-        Optional<User> user = userRepository.findById(userId);
-        if (user.isPresent()) {
-            return new ResponseEntity<>(user.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("User not found!", HttpStatus.NOT_FOUND);
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, String.format("User not found with id %d", userId)));
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
         }
     }
 
     @DeleteMapping(path= "/users/{id}")
     public ResponseEntity<?> deleteAccount(@PathVariable Integer id) {
-        Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()) {
-            userRepository.deleteById(id);
-            //  DELETE /marketplace/users/{userId} to delete cancel and remove user's orders
+        try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, String.format("User not found with id %d", id)));
             try {
-                ResponseEntity<String> marketplaceResponse = restClient.delete()
-                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
-                        .retrieve()
-                        .toEntity(String.class);
-
-                ResponseEntity<String> walletResponse = restClient.delete()
-                        .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
-                        .retrieve()
-                        .toEntity(String.class);
-
-            } catch (HttpClientErrorException e) {
-                if (e.getStatusCode() != HttpStatus.NOT_FOUND) {
-                    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-                }
+                userRepository.deleteById(id);
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!");
             }
-            return new ResponseEntity<>(user.get() + "Wallet Deleted!", HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("User not found!", HttpStatus.NOT_FOUND);
+            ResponseEntity<?> marketplaceResponse = restClient.delete()
+                    .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
+                    .exchange(((clientRequest, clientResponse) -> {
+                        if (clientResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
+                            return new ResponseEntity<>("No User order found in Marketplace!", HttpStatus.NOT_FOUND);
+                        } else if (clientResponse.getStatusCode().is2xxSuccessful()) {
+                            return new ResponseEntity<>("User order(s) successfully deleted in Marketplace.", HttpStatus.OK);
+                        } else {
+                            throw new ResponseStatusException(clientResponse.getStatusCode(), "User order deletion failed!");
+                        }
+                    }));
+
+            ResponseEntity<?> walletResponse = restClient.delete()
+                    .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
+                    .exchange(((clientRequest, clientResponse) -> {
+                        if (clientResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
+                            return new ResponseEntity<>("No User wallet found in Marketplace!", HttpStatus.NOT_FOUND);
+                        } else if (clientResponse.getStatusCode().is2xxSuccessful()) {
+                            return new ResponseEntity<>("User wallet successfully deleted in Marketplace.", HttpStatus.OK);
+                        } else {
+                            throw new ResponseStatusException(clientResponse.getStatusCode(), "User wallet deletion failed!");
+                        }
+                    }));
+            return new ResponseEntity<>(marketplaceResponse + "\n" + walletResponse, HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
         }
     }
 
     @DeleteMapping(path = "/users")
     public ResponseEntity<String> deleteAllAccounts() {
-        userRepository.deleteAll();
-        //  DELETE /marketplace to reset all orders, product and discount_usage, etc.
-        ResponseEntity<String> response = restClient.delete()
-                .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
-                .retrieve()
-                .toEntity(String.class);
-        if (response.getStatusCode() != HttpStatus.OK) {
-            return new ResponseEntity<>("Marketplace deletion unsuccessful!", HttpStatus.INTERNAL_SERVER_ERROR);
+        try {
+            try {
+                userRepository.deleteAll();
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!");
+            }
+            try {
+                ResponseEntity<String> response = restClient.delete()
+                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
+                        .retrieve()
+                        .toEntity(String.class);
+            } catch (HttpClientErrorException e) {
+                throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!");
+            }
+            try {
+                ResponseEntity<String> response = restClient.delete()
+                        .uri(baseURI + walletServiceEndpoint + "/wallets")
+                        .retrieve()
+                        .toEntity(String.class);
+            } catch (HttpClientErrorException e) {
+                throw new ResponseStatusException(e.getStatusCode(), "Wallet deletion unsuccessful!");
+            }
+            return new ResponseEntity<>("All users deleted!", HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
         }
-        //  DELETE /wallets to remove all wallets
-        response = restClient.delete()
-                .uri(baseURI + walletServiceEndpoint + "/wallets")
-                .retrieve()
-                .toEntity(String.class);
-        if (response.getStatusCode() != HttpStatus.OK) {
-            return new ResponseEntity<>("Wallet deletion unsuccessful!", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>("All users deleted!", HttpStatus.OK);
     }
 }
