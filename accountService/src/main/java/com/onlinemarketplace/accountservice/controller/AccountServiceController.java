@@ -84,30 +84,30 @@ public class AccountServiceController {
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }
-            ResponseEntity<?> marketplaceResponse = restClient.delete()
+            String marketplaceResponse = restClient.delete()
                     .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
                     .exchange(((clientRequest, clientResponse) -> {
                         if (clientResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
-                            return new ResponseEntity<>("No User order found in Marketplace!", HttpStatus.NOT_FOUND);
+                            return "No User order found in Marketplace!";
                         } else if (clientResponse.getStatusCode().is2xxSuccessful()) {
-                            return new ResponseEntity<>("User order(s) successfully deleted in Marketplace.", HttpStatus.OK);
+                            return "User order(s) successfully cancelled in Marketplace.";
                         } else {
                             throw new ResponseStatusException(clientResponse.getStatusCode(), "User order deletion failed!");
                         }
                     }));
 
-            ResponseEntity<?> walletResponse = restClient.delete()
+            String walletResponse = restClient.delete()
                     .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
                     .exchange(((clientRequest, clientResponse) -> {
                         if (clientResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
-                            return new ResponseEntity<>("No User wallet found in Marketplace!", HttpStatus.NOT_FOUND);
+                            return "No User wallet found in Marketplace!";
                         } else if (clientResponse.getStatusCode().is2xxSuccessful()) {
-                            return new ResponseEntity<>("User wallet successfully deleted in Marketplace.", HttpStatus.OK);
+                            return "User wallet successfully deleted.";
                         } else {
                             throw new ResponseStatusException(clientResponse.getStatusCode(), "User wallet deletion failed!");
                         }
                     }));
-            return new ResponseEntity<>(marketplaceResponse + "\n" + walletResponse, HttpStatus.OK);
+            return new ResponseEntity<>("User deleted successfully.\n" + marketplaceResponse + "\n" + walletResponse, HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
         }
