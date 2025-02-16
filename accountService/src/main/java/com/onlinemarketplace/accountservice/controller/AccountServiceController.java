@@ -12,8 +12,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
-
 @RestController
 public class AccountServiceController {
     private final UserRepository userRepository;
@@ -42,7 +40,7 @@ public class AccountServiceController {
             }
             return new ResponseEntity<>("Discount successfully updated!", HttpStatus.OK);
         } catch (ResponseStatusException e) {
-            return new ResponseEntity<String>(e.getMessage(), e.getStatusCode(), e);
+            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
         }
     }
 
