@@ -3,6 +3,7 @@ package com.onlinemarketplace.accountservice.controller;
 import com.onlinemarketplace.accountservice.model.User;
 import com.onlinemarketplace.accountservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
@@ -37,11 +38,11 @@ public class AccountServiceController {
             try {
                 userRepository.updateDiscountAvailedByIdById(user.getId(), true);
             } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Discount update failed!");
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Discount update failed!", e);
             }
             return new ResponseEntity<>("Discount successfully updated!", HttpStatus.OK);
         } catch (ResponseStatusException e) {
-            return new ResponseEntity<String>(e.getMessage(), e.getStatusCode());
+            return new ResponseEntity<String>(e.getMessage(), e.getStatusCode(), e);
         }
     }
 
@@ -52,7 +53,7 @@ public class AccountServiceController {
                 try {
                     userRepository.save(user);
                 } catch (Exception e) {
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User creation failed!");
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User creation failed!", e);
                 }
                 return new ResponseEntity<>(user, HttpStatus.CREATED);
             } else {
@@ -78,13 +79,12 @@ public class AccountServiceController {
     @DeleteMapping(path= "/users/{id}")
     public ResponseEntity<?> deleteAccount(@PathVariable Integer id) {
         try {
-            User user = userRepository.findById(id)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, String.format("User not found with id %d", id)));
             try {
                 userRepository.deleteById(id);
+            } catch (EmptyResultDataAccessException e) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("User not found with id %d", id), e);
             } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!");
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }
             ResponseEntity<?> marketplaceResponse = restClient.delete()
                     .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
@@ -121,7 +121,7 @@ public class AccountServiceController {
             try {
                 userRepository.deleteAll();
             } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!");
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }
             try {
                 ResponseEntity<String> response = restClient.delete()
@@ -129,7 +129,7 @@ public class AccountServiceController {
                         .retrieve()
                         .toEntity(String.class);
             } catch (HttpClientErrorException e) {
-                throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!");
+                throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!", e);
             }
             try {
                 ResponseEntity<String> response = restClient.delete()
@@ -137,7 +137,7 @@ public class AccountServiceController {
                         .retrieve()
                         .toEntity(String.class);
             } catch (HttpClientErrorException e) {
-                throw new ResponseStatusException(e.getStatusCode(), "Wallet deletion unsuccessful!");
+                throw new ResponseStatusException(e.getStatusCode(), "Wallet deletion unsuccessful!", e);
             }
             return new ResponseEntity<>("All users deleted!", HttpStatus.OK);
         } catch (ResponseStatusException e) {
