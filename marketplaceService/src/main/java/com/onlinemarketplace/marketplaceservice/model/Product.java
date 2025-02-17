@@ -13,6 +13,7 @@ public class Product {
     private Integer price;
     private Integer stock_quantity;
 
+    // Getter and Setters
     public Integer getId() {
         return id;
     }

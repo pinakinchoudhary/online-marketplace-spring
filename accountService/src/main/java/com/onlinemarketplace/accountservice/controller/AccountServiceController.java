@@ -16,17 +16,28 @@ import org.springframework.web.server.ResponseStatusException;
 public class AccountServiceController {
     private final UserRepository userRepository;
     private final RestClient restClient;
-    private static final String baseURI = "http://localhost";
+    private static final String baseURI = "http://host.docker.internal";
     private static final String marketplaceServiceEndpoint = ":8081";
     private static final String walletServiceEndpoint = ":8082";
 
+    /**
+     * Constructor for AccountServiceController.
+     *
+     * @param userRepository The user repository.
+     * @param restClient     The REST client for making external service calls.
+     */
     @Autowired
     public AccountServiceController(UserRepository userRepository, RestClient restClient) {
         this.userRepository = userRepository;
         this.restClient = restClient;
     }
 
-    // Handle a PUT request for updating the discount_availed field
+    /**
+     * Updates the discount_availed field for a user.
+     *
+     * @param id The user ID.
+     * @return ResponseEntity indicating success or failure.
+     */
     @PutMapping("/updateDiscount/{id}")
     public ResponseEntity<?> discount(@PathVariable("id") Integer id) {
         try {
@@ -44,6 +55,12 @@ public class AccountServiceController {
         }
     }
 
+    /**
+     * Creates a new user account.
+     *
+     * @param user The user details.
+     * @return ResponseEntity with created user details or an error message.
+     */
     @PostMapping(value = "/users", consumes = "application/json")
     public ResponseEntity<?> createAccount(@RequestBody User user) {
         try {
@@ -62,6 +79,12 @@ public class AccountServiceController {
         }
     }
 
+    /**
+     * Retrieves a user account by ID.
+     *
+     * @param userId The user ID.
+     * @return ResponseEntity with user details or an error message.
+     */
     @GetMapping(path = "/users/{userId}")
     public ResponseEntity<?> getAccount(@PathVariable Integer userId) {
         try {
@@ -74,6 +97,12 @@ public class AccountServiceController {
         }
     }
 
+    /**
+     * Deletes a user account by ID and removes related data from external services.
+     *
+     * @param id The user ID.
+     * @return ResponseEntity indicating success or failure.
+     */
     @DeleteMapping(path= "/users/{id}")
     public ResponseEntity<?> deleteAccount(@PathVariable Integer id) {
         try {
@@ -84,6 +113,8 @@ public class AccountServiceController {
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }
+
+            // Remove user's orders from Marketplace
             String marketplaceResponse = restClient.delete()
                     .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
                     .exchange(((clientRequest, clientResponse) -> {
@@ -96,6 +127,7 @@ public class AccountServiceController {
                         }
                     }));
 
+            // Remove user's wallet data
             String walletResponse = restClient.delete()
                     .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
                     .exchange(((clientRequest, clientResponse) -> {
@@ -107,12 +139,18 @@ public class AccountServiceController {
                             throw new ResponseStatusException(clientResponse.getStatusCode(), "User wallet deletion failed!");
                         }
                     }));
+
             return new ResponseEntity<>("User deleted successfully.\n" + marketplaceResponse + "\n" + walletResponse, HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
         }
     }
 
+    /**
+     * Deletes all user accounts and their related data from external services.
+     *
+     * @return ResponseEntity indicating success or failure.
+     */
     @DeleteMapping(path = "/users")
     public ResponseEntity<String> deleteAllAccounts() {
         try {
@@ -121,22 +159,25 @@ public class AccountServiceController {
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }
+
             try {
-                ResponseEntity<String> response = restClient.delete()
+                restClient.delete()
                         .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
                         .retrieve()
                         .toEntity(String.class);
             } catch (HttpClientErrorException e) {
                 throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!", e);
             }
+
             try {
-                ResponseEntity<String> response = restClient.delete()
+                restClient.delete()
                         .uri(baseURI + walletServiceEndpoint + "/wallets")
                         .retrieve()
                         .toEntity(String.class);
             } catch (HttpClientErrorException e) {
                 throw new ResponseStatusException(e.getStatusCode(), "Wallet deletion unsuccessful!", e);
             }
+
             return new ResponseEntity<>("All users deleted!", HttpStatus.OK);
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getMessage(), e.getStatusCode());

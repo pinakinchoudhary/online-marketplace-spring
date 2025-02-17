@@ -24,4 +24,12 @@ public class Wallet {
     public void setBalance(Integer balance) {
         this.balance = balance;
     }
+
+    @Override
+    public String toString() {
+        return "Wallet{" +
+                "user_id=" + user_id +
+                ", balance=" + balance +
+                '}';
+    }
 }

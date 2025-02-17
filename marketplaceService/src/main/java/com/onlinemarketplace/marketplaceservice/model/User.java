@@ -7,12 +7,11 @@ import jakarta.persistence.*;
 public class User {
 
     private Integer id;
-    // Note: This works because in Payload JSON, id field is not present, it's auto-generated. All other names in payload
-    // must match the ones defined here!
     private String name;
     private String email;
     private Boolean discount_availed = false;
 
+    // Getter and Setters
     public Integer getId() {
         return id;
     }

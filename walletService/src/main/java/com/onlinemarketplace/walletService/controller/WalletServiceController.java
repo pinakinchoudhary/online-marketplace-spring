@@ -18,7 +18,7 @@ import java.util.Optional;
 public class WalletServiceController {
     private final WalletRepository walletRepository;
     private final RestClient restClient;
-    private static final String baseURI = "http://localhost";
+    private static final String baseURI = "http://host.docker.internal";
     private static final String accountServiceEndpoint = ":8080/users/";
 
 
@@ -82,10 +82,10 @@ public class WalletServiceController {
     @DeleteMapping(path = "/wallets/{user_id}")
     public ResponseEntity<?> deleteWallet(@PathVariable("user_id") Integer user_id) {
         try {
+            Wallet wallet = walletRepository.findByUser_id(user_id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found!"));
             try {
                 walletRepository.deleteById(user_id);
-            } catch (EmptyResultDataAccessException e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found!");
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while deleting wallet!", e);
             }

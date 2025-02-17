@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 @Entity
 public class OrderItem {
-
+    
     @Id
     @SequenceGenerator(
             name = "order_item_generator",
@@ -16,11 +16,24 @@ public class OrderItem {
             generator = "order_item_generator"
     )
     private Integer id;
+    /**
+     * The order to which this order item belongs.
+     * This establishes a many-to-one relationship with the {@link Order} entity.
+     * The column "order_id" in database table will store foreign keys.
+     * "order" represents the mappedBy field name in @OneToMany of {@link Order}
+     */
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
     private Integer product_id;
     private Integer quantity;
+
+    // Implementing the getOrder() method may lead to infinite recursion during JSON serialization
+    // as it references the parent Order object. So, omitted.
+
+    public void setOrder(Order order) {
+        this.order = order;
+    }
 
     public Integer getId() {
         return id;
@@ -28,15 +41,6 @@ public class OrderItem {
 
     public void setId(Integer id) {
         this.id = id;
-    }
-
-    // remove to prevent infinite jsonification from response entity
-//    public Order getOrder() {
-//        return order;
-//    }
-
-    public void setOrder(Order order) {
-        this.order = order;
     }
 
     public Integer getProduct_id() {

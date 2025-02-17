@@ -7,6 +7,11 @@ import java.util.List;
 @Entity
 @Table(name = "orders")
 public class Order {
+
+    /**
+     * The unique identifier for the order.
+     * This ID is generated automatically using a sequence generator.
+     */
     @Id
     @SequenceGenerator(
             name = "order_generator",
@@ -20,10 +25,16 @@ public class Order {
     private Integer user_id;
     private Integer total_price;
     private String status;
-
+    /**
+     * The list of items associated with this order.
+     * This establishes a one-to-many relationship with the {@link OrderItem} entity.
+     * The cascade option allows for operations on the order eg. .save() to be propagated to its items.
+     */
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    List<OrderItem> items; // changed from orderItems to items
+    private List<OrderItem> items;
 
+
+    // Getter and Setters
     public Integer getOrder_id() {
         return order_id;
     }

@@ -5,23 +5,22 @@ import jakarta.persistence.*;
 @Entity
 @Table(name="account_user")
 public class User {
+    /**
+     * Id of the User
+     * Provided in payload of HTTP request.
+     */
     @Id
-//    @SequenceGenerator(
-//            name="user_sequence",
-//            allocationSize = 1
-//    )
-//    @GeneratedValue(
-//            strategy = GenerationType.SEQUENCE,
-//            generator = "user_sequence"
-//    )
     private Integer id;
-    // Note: This works because in Payload JSON, id field is not present, it's auto-generated. All other names in payload
-    // must match the ones defined here!
     private String name;
+    /**
+     * Every email should be unique.
+     */
     @Column(unique=true)
     private String email;
     private Boolean discount_availed = false;
 
+
+    // Getter and Setters
     @Override
     public String toString() {
         return '{' +
