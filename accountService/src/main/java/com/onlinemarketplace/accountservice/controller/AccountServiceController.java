@@ -106,10 +106,10 @@ public class AccountServiceController {
     @DeleteMapping(path= "/users/{id}")
     public ResponseEntity<?> deleteAccount(@PathVariable Integer id) {
         try {
+            User user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("User not found with id %d", id)));
             try {
                 userRepository.deleteById(id);
-            } catch (EmptyResultDataAccessException e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("User not found with id %d", id), e);
             } catch (Exception e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }

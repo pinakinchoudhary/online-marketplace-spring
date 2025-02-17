@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 
 @Entity
 public class OrderItem {
-    
     @Id
     @SequenceGenerator(
             name = "order_item_generator",

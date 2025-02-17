@@ -23,6 +23,7 @@ def main():
     print(f"=> get_wallet({user_id})")
     create_wallet(user_id)
     response_get_wallet = get_wallet(user_id)
+    print(response_get_wallet)
     print(f"<= get_wallet() response: {response_get_wallet.json()}")
     
     if (test_get_wallet(user_id, response_get_wallet)):

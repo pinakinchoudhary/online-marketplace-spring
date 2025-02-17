@@ -138,7 +138,7 @@ public class MarketplaceServiceController {
                         if (clientResponse.getStatusCode().is2xxSuccessful()) {
                             return clientResponse.bodyTo(User.class);
                         } else if (clientResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
-                            throw new ResponseStatusException(clientResponse.getStatusCode(), clientResponse.bodyTo(String.class));
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, clientResponse.bodyTo(String.class));
                         } else {
                             throw new ResponseStatusException(clientResponse.getStatusCode(), "Error while fetching User!");
                         }
@@ -150,11 +150,14 @@ public class MarketplaceServiceController {
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Error while fetching product stock!"));
                 if (orderItem.getQuantity() > productStock) {
                     String productName = productRepository.findById(orderItem.getProduct_id()).get().getName();
-                    return new ResponseEntity<>(productName + " is out of stock!", HttpStatus.BAD_REQUEST);
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, productName + " is out of stock!");
+                } else if (orderItem.getQuantity() > 0) {
+                    int productPrice = productRepository.findPriceById(orderItem.getProduct_id())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Error while fetching product price!"));
+                    totalCost += orderItem.getQuantity() * productPrice;
+                } else {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product quantity is less than or equal to zero!");
                 }
-                int productPrice = productRepository.findPriceById(orderItem.getProduct_id())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Error while fetching product price!"));
-                totalCost += orderItem.getQuantity() * productPrice;
             }
 
             assert user != null;
@@ -195,7 +198,7 @@ public class MarketplaceServiceController {
             try {
                 orderRepository.save(order);
             } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while saving order!", e);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error while saving order!", e);
             }
             return new ResponseEntity<>(order, HttpStatus.CREATED);
         } catch (ResponseStatusException e) {
@@ -254,7 +257,7 @@ public class MarketplaceServiceController {
     public ResponseEntity<?> deleteOrderById(@PathVariable Integer order_id) {
         try {
             Order order = orderRepository.findById(order_id)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found!"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order not found!"));
 
             if (order.getStatus().equals("PLACED")) {
                 order.setStatus("CANCELLED");
@@ -297,7 +300,10 @@ public class MarketplaceServiceController {
     public ResponseEntity<?> updateOrder(@PathVariable Integer order_id, @RequestBody Order order) {
         try {
             Order newOrder = orderRepository.findById(order_id)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found!"));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order not found!"));
+            if (!order.getStatus().equals("DELIVERED")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad request body!");
+            }
             if (newOrder.getStatus().equals("PLACED")) {
                 try {
                     orderRepository.updateStatusByOrder_id(order_id, "DELIVERED");
@@ -305,10 +311,8 @@ public class MarketplaceServiceController {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while updating order status!", e);
                 }
                 return new ResponseEntity<>("Order delivered Successfully!", HttpStatus.OK);
-            } else if (newOrder.getStatus().equals("DELIVERED")) {
-                return new ResponseEntity<>("Order already delivered!", HttpStatus.OK);
             } else {
-                return new ResponseEntity<>("Order was CANCELLED!", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Order was CANCELLED or DELIVERED!", HttpStatus.BAD_REQUEST);
             }
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getMessage(), e.getStatusCode());

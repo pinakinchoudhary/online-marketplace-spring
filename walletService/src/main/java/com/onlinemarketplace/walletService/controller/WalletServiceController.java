@@ -72,6 +72,9 @@ public class WalletServiceController {
             } catch (RestClientResponseException e) {
                 throw new ResponseStatusException(e.getStatusCode(), e.getResponseBodyAsString(), e);
             }
+            if (walletRequestBody.getAmount() < 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be greater than zero!");
+            }
 
             Optional<Wallet> walletOptional = walletRepository.findByUser_id(user_id);
             Wallet wallet = walletOptional.orElseGet(Wallet::new);
