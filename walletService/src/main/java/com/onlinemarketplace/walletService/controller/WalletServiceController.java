@@ -14,6 +14,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
+/**
+ * Endpoints:
+ * - GET /wallets/{user_id}: Retrieve a user's wallet.
+ * - PUT /wallets/{user_id}: Update a user's wallet (credit/debit).
+ * - DELETE /wallets/{user_id}: Delete a user's wallet.
+ * - DELETE /wallets: Delete all wallets.
+ */
 @RestController
 public class WalletServiceController {
     private final WalletRepository walletRepository;
@@ -28,6 +35,13 @@ public class WalletServiceController {
         this.restClient = restClient;
     }
 
+    /**
+     * Retrieves the wallet associated with the specified user ID.
+     *
+     * @param user_id the ID of the user whose wallet is to be retrieved
+     * @return ResponseEntity containing the wallet details if found,
+     *         or an error message if the wallet does not exist
+     */
     @GetMapping(path = "wallets/{user_id}")
     public ResponseEntity<?> getWallet(@PathVariable("user_id") Integer user_id) {
         try {
@@ -39,6 +53,14 @@ public class WalletServiceController {
         }
     }
 
+    /**
+     * Updates the wallet for the specified user ID based on the provided action (credit or debit).
+     *
+     * @param user_id          the ID of the user whose wallet is to be updated
+     * @param walletRequestBody the request body containing the action and amount to be processed
+     * @return ResponseEntity containing the updated wallet if successful,
+     *         or an error message if the operation fails (e.g., insufficient balance or user not found)
+     */
     @PutMapping(value = "/wallets/{user_id}", consumes = "application/json")
     public ResponseEntity<?> updateWallet(@PathVariable("user_id") Integer user_id, @RequestBody WalletRequestBody walletRequestBody) {
         try {
@@ -79,6 +101,13 @@ public class WalletServiceController {
         }
     }
 
+    /**
+     * Deletes the wallet associated with the specified user ID.
+     *
+     * @param user_id the ID of the user whose wallet is to be deleted
+     * @return ResponseEntity confirming deletion if successful,
+     *         or an error message if the wallet does not exist or an error occurs
+     */
     @DeleteMapping(path = "/wallets/{user_id}")
     public ResponseEntity<?> deleteWallet(@PathVariable("user_id") Integer user_id) {
         try {
@@ -95,6 +124,12 @@ public class WalletServiceController {
         }
     }
 
+    /**
+     * Deletes all wallets in the system.
+     *
+     * @return ResponseEntity confirming deletion of all wallets if successful,
+     *         or an error message if an error occurs during the deletion process
+     */
     @DeleteMapping(path = "/wallets")
     public ResponseEntity<?> deleteWallets() {
         try {

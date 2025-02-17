@@ -3,6 +3,10 @@ package com.onlinemarketplace.walletService.model;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
+/**
+ * Represents a user's wallet in the online marketplace.
+ * Contains the user's ID and the current balance.
+ */
 @Entity
 public class Wallet {
     @Id
