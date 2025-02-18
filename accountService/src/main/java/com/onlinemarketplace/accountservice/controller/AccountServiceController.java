@@ -174,14 +174,14 @@ public class AccountServiceController {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }
 
-//            try {
-//                restClient.delete()
-//                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
-//                        .retrieve()
-//                        .toEntity(String.class);
-//            } catch (HttpClientErrorException e) {
-//                throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!", e);
-//            }
+            try {
+                restClient.delete()
+                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
+                        .retrieve()
+                        .toEntity(String.class);
+            } catch (HttpClientErrorException e) {
+                throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!", e);
+            }
 
             try {
                 restClient.delete()

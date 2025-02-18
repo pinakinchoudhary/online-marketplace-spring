@@ -353,33 +353,33 @@ public class MarketplaceServiceController {
         }
     }
 
-//    /**
-//     * Deletes all orders in the marketplace.
-//     * This method retrieves all orders from the repository and deletes each one.
-//     *
-//     * @return a ResponseEntity indicating the result of the operation
-//     */
-//    @DeleteMapping("/marketplace")
-//    public ResponseEntity<?> deleteMarketplace() {
-//        try {
-//            List<Order> orders;
-//            try {
-//                orders = orderRepository.findAll();
-//            } catch (Exception e) {
-//                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while fetching orders!", e);
-//            }
-//            for (Order order : orders) {
-//                try {
-//                    deleteOrderById(order.getOrder_id());
-//                } catch (Exception e) {
-//                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while deleting orders!", e);
-//                }
-//            }
-//            return new ResponseEntity<>("Marketplace deleted!", HttpStatus.OK);
-//        } catch (ResponseStatusException e) {
-//            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
-//        }
-//    }
+    /**
+     * Deletes all orders in the marketplace.
+     * This method retrieves all orders from the repository and deletes each one.
+     *
+     * @return a ResponseEntity indicating the result of the operation
+     */
+    @DeleteMapping("/marketplace")
+    public ResponseEntity<?> deleteMarketplace() {
+        try {
+            List<Order> orders;
+            try {
+                orders = orderRepository.findAll();
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while fetching orders!", e);
+            }
+            for (Order order : orders) {
+                try {
+                    deleteOrderById(order.getOrder_id());
+                } catch (Exception e) {
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while deleting orders!", e);
+                }
+            }
+            return new ResponseEntity<>("Marketplace deleted!", HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
+        }
+    }
 }
 
 
