@@ -79,6 +79,29 @@ public class MarketplaceServiceController {
         }
     }
 
+    // check for invalid orderItem payload
+    private boolean isValidOrderItem(final OrderItem orderItem) {
+        if (orderItem.getQuantity() == null) {
+            return false;
+        } else if (orderItem.getProduct_id() == null) {
+            return false;
+        }
+        return true;
+    }
+    // checks for valid payload
+    private boolean isValidPayloadForPostMethod(final Order order) {
+        if (order.getUser_id() == null) {
+            return false;
+        } else if (order.getItems() == null || order.getItems().isEmpty()) {
+            return false;
+        } for (OrderItem orderItem : order.getItems()) {
+            if (!isValidOrderItem(orderItem)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Handles the HTTP POST request to add a new order.
      *
@@ -90,47 +113,13 @@ public class MarketplaceServiceController {
      * @param order The order object containing user ID and order items to be processed.
      * @return A ResponseEntity containing the created order and HTTP status code.
      *         If an error occurs, it returns an error message and the corresponding HTTP status.
-     *
-     * Steps:
-     * 1. Retrieve the user associated with the order using the user ID from the order object.
-     *    - If the user is not found, a NOT_FOUND exception is thrown.
-     *    - If the user is found, the user object is stored for further processing.
-     *
-     * 2. Initialize a variable to calculate the total cost of the order.
-     *
-     * 3. Iterate through each item in the order:
-     *    - Check the stock quantity of the product.
-     *      - If the product is not found, a NOT_FOUND exception is thrown.
-     *      - If the requested quantity exceeds available stock, a BAD_REQUEST response is returned.
-     *    - Retrieve the price of the product.
-     *      - If the product price is not found, a NOT_FOUND exception is thrown.
-     *    - Calculate the total cost by multiplying the quantity of each item by its price.
-     *
-     * 4. Check if the user has availed any discounts:
-     *    - If not, apply a 10% discount to the total cost.
-     *
-     * 5. Attempt to debit the total cost from the user's wallet:
-     *    - If the wallet service responds with an error, a BAD_REQUEST exception is thrown.
-     *
-     * 6. Update the user's discount status:
-     *    - If the discount update fails, a BAD_REQUEST exception is thrown.
-     *
-     * 7. Decrease the stock quantity for each ordered product:
-     *    - If an error occurs during stock update, an INTERNAL_SERVER_ERROR exception is thrown.
-     *
-     * 8. Set the total price and status of the order to "PLACED".
-     *
-     * 9. Save the order to the order repository:
-     *    - If saving the order fails, an INTERNAL_SERVER_ERROR exception is thrown.
-     *
-     * 10. Return a ResponseEntity with the created order and HTTP status CREATED (201).
-     *
-     * In case of any exceptions during the process, a ResponseEntity with the error message
-     * and corresponding HTTP status code is returned.
      */
     @PostMapping(value = "/orders", consumes = "application/json")
     public ResponseEntity<?> addOrder(@RequestBody Order order) {
         try {
+            if (!isValidPayloadForPostMethod(order)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payload!");
+            }
             User user = restClient.get()
                     .uri(baseURI + accountServiceEndpoint + order.getUser_id())
                     .accept(MediaType.APPLICATION_JSON)
@@ -288,6 +277,15 @@ public class MarketplaceServiceController {
         }
     }
 
+    private boolean isValidPayloadForPutMethod(final Order order) {
+        if (order.getUser_id() == null) {
+            return false;
+        } else if (order.getStatus() == null) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Updates the status of an existing order to "DELIVERED".
      * This method checks the current status of the order and updates it if the order is in the "PLACED" state.
@@ -299,6 +297,9 @@ public class MarketplaceServiceController {
     @PutMapping(value = "/orders/{order_id}", consumes = "application/json")
     public ResponseEntity<?> updateOrder(@PathVariable Integer order_id, @RequestBody Order order) {
         try {
+            if (!isValidPayloadForPutMethod(order)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payload!");
+            }
             Order newOrder = orderRepository.findById(order_id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order not found!"));
             if (!order.getStatus().equals("DELIVERED")) {
@@ -352,33 +353,33 @@ public class MarketplaceServiceController {
         }
     }
 
-    /**
-     * Deletes all orders in the marketplace.
-     * This method retrieves all orders from the repository and deletes each one.
-     *
-     * @return a ResponseEntity indicating the result of the operation
-     */
-    @DeleteMapping("/marketplace")
-    public ResponseEntity<?> deleteMarketplace() {
-        try {
-            List<Order> orders;
-            try {
-                orders = orderRepository.findAll();
-            } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while fetching orders!", e);
-            }
-            for (Order order : orders) {
-                try {
-                    deleteOrderById(order.getOrder_id());
-                } catch (Exception e) {
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while deleting orders!", e);
-                }
-            }
-            return new ResponseEntity<>("Marketplace deleted!", HttpStatus.OK);
-        } catch (ResponseStatusException e) {
-            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
-        }
-    }
+//    /**
+//     * Deletes all orders in the marketplace.
+//     * This method retrieves all orders from the repository and deletes each one.
+//     *
+//     * @return a ResponseEntity indicating the result of the operation
+//     */
+//    @DeleteMapping("/marketplace")
+//    public ResponseEntity<?> deleteMarketplace() {
+//        try {
+//            List<Order> orders;
+//            try {
+//                orders = orderRepository.findAll();
+//            } catch (Exception e) {
+//                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while fetching orders!", e);
+//            }
+//            for (Order order : orders) {
+//                try {
+//                    deleteOrderById(order.getOrder_id());
+//                } catch (Exception e) {
+//                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error while deleting orders!", e);
+//                }
+//            }
+//            return new ResponseEntity<>("Marketplace deleted!", HttpStatus.OK);
+//        } catch (ResponseStatusException e) {
+//            return new ResponseEntity<>(e.getMessage(), e.getStatusCode());
+//        }
+//    }
 }
 
 

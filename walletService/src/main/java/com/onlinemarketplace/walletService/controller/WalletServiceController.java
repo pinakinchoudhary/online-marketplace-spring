@@ -53,6 +53,15 @@ public class WalletServiceController {
         }
     }
 
+    boolean isValidPayloadForPutMethod(final WalletRequestBody walletRequestBody) {
+        if (walletRequestBody.getAmount() == null) {
+            return false;
+        } else if (walletRequestBody.getAction() == null) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Updates the wallet for the specified user ID based on the provided action (credit or debit).
      *
@@ -64,6 +73,9 @@ public class WalletServiceController {
     @PutMapping(value = "/wallets/{user_id}", consumes = "application/json")
     public ResponseEntity<?> updateWallet(@PathVariable("user_id") Integer user_id, @RequestBody WalletRequestBody walletRequestBody) {
         try {
+            if (!isValidPayloadForPutMethod(walletRequestBody)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payload!");
+            }
             try {
                 ResponseEntity<Void> accountServiceResponse = restClient.get()
                         .uri(baseURI + accountServiceEndpoint + user_id)
@@ -92,6 +104,8 @@ public class WalletServiceController {
                 } else {
                     wallet.setBalance(wallet.getBalance() - walletRequestBody.getAmount());
                 }
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid action!");
             }
             try {
                 walletRepository.save(wallet);

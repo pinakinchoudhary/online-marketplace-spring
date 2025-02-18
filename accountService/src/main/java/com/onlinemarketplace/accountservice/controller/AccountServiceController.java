@@ -3,7 +3,6 @@ package com.onlinemarketplace.accountservice.controller;
 import com.onlinemarketplace.accountservice.model.User;
 import com.onlinemarketplace.accountservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +29,18 @@ public class AccountServiceController {
     public AccountServiceController(UserRepository userRepository, RestClient restClient) {
         this.userRepository = userRepository;
         this.restClient = restClient;
+    }
+
+    private boolean isValidPayloadForPostMethod(final User user) {
+        if (user.getId() == null) {
+            return false;
+        } else if (user.getName() == null) {
+            return false;
+        } else if (user.getEmail() == null) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**
@@ -64,6 +75,9 @@ public class AccountServiceController {
     @PostMapping(value = "/users", consumes = "application/json")
     public ResponseEntity<?> createAccount(@RequestBody User user) {
         try {
+            if (!isValidPayloadForPostMethod(user)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payload, all fields must be non-null.");
+            }
             if (userRepository.findByEmail(user.getEmail()).isEmpty()) {
                 try {
                     userRepository.save(user);
@@ -160,14 +174,14 @@ public class AccountServiceController {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User deletion failed!", e);
             }
 
-            try {
-                restClient.delete()
-                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
-                        .retrieve()
-                        .toEntity(String.class);
-            } catch (HttpClientErrorException e) {
-                throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!", e);
-            }
+//            try {
+//                restClient.delete()
+//                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
+//                        .retrieve()
+//                        .toEntity(String.class);
+//            } catch (HttpClientErrorException e) {
+//                throw new ResponseStatusException(e.getStatusCode(), "Marketplace deletion unsuccessful!", e);
+//            }
 
             try {
                 restClient.delete()
