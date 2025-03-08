@@ -278,7 +278,7 @@ public class MarketplaceServiceController {
     }
 
     private boolean isValidPayloadForPutMethod(final Order order) {
-        if (order.getUser_id() == null) {
+        if (order.getOrder_id() == null) {
             return false;
         } else if (order.getStatus() == null) {
             return false;
