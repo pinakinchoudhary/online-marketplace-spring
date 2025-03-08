@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accountservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accountservice
+  template:
+    metadata:
+      labels:
+        app: accountservice
+    spec:
+      containers:
+      - name: accountservice
+        image: vansh-pinakin-accountservice:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: accountservice
+spec:
+  selector:
+    app: accountservice
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP

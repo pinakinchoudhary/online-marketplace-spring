@@ -6,4 +6,6 @@ COPY mvnw .
 COPY pom.xml .
 COPY src ./src
 
+EXPOSE 8080
+
 ENTRYPOINT ["./mvnw", "spring-boot:run"]
