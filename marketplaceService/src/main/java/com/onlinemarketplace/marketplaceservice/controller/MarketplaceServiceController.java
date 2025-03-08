@@ -21,10 +21,11 @@ public class MarketplaceServiceController {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final RestClient restClient;
-    private static final String baseURI = "http://host.docker.internal";
-    private static final String accountServiceEndpoint = ":8080/users/";
-    private static final String discountUpdateEndpoint = ":8080/updateDiscount/";
-    private static final String walletServiceEndpoint = ":8082/wallets/";
+    private static final String accountServiceURI = "http://accountservice:8080";
+    private static final String walletServiceURI = "http://walletservice:8082";
+    private static final String accountServiceEndpoint = "/users/";
+    private static final String discountUpdateEndpoint = "/updateDiscount/";
+    private static final String walletServiceEndpoint = "/wallets/";
 
     /**
      * Constructor for dependency injection.
@@ -121,7 +122,7 @@ public class MarketplaceServiceController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid payload!");
             }
             User user = restClient.get()
-                    .uri(baseURI + accountServiceEndpoint + order.getUser_id())
+                    .uri(accountServiceURI + accountServiceEndpoint + order.getUser_id())
                     .accept(MediaType.APPLICATION_JSON)
                     .exchange(((clientRequest, clientResponse) -> {
                         if (clientResponse.getStatusCode().is2xxSuccessful()) {
@@ -156,7 +157,7 @@ public class MarketplaceServiceController {
 
             try {
                 ResponseEntity<Void> walletServiceResponse = restClient.put()
-                        .uri(baseURI + walletServiceEndpoint + order.getUser_id())
+                        .uri(walletServiceURI + walletServiceEndpoint + order.getUser_id())
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(new WalletRequestBody("debit", totalCost))
                         .retrieve()
@@ -167,7 +168,7 @@ public class MarketplaceServiceController {
 
             try {
                 ResponseEntity<Void> discountResponse = restClient.put()
-                        .uri(baseURI + discountUpdateEndpoint + order.getUser_id())
+                        .uri(accountServiceURI + discountUpdateEndpoint + order.getUser_id())
                         .retrieve()
                         .toBodilessEntity();
             } catch (RestClientResponseException e) {
@@ -261,7 +262,7 @@ public class MarketplaceServiceController {
 
                 try {
                     ResponseEntity<Void> walletServiceResponse = restClient.put()
-                            .uri(baseURI + walletServiceEndpoint + order.getUser_id())
+                            .uri(walletServiceURI + walletServiceEndpoint + order.getUser_id())
                             .contentType(MediaType.APPLICATION_JSON)
                             .body(new WalletRequestBody("credit", order.getTotal_price()))
                             .retrieve()

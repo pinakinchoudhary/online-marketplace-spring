@@ -15,9 +15,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class AccountServiceController {
     private final UserRepository userRepository;
     private final RestClient restClient;
-    private static final String baseURI = "http://host.docker.internal";
-    private static final String marketplaceServiceEndpoint = ":8081";
-    private static final String walletServiceEndpoint = ":8082";
+    private static final String marketplaceServiceURI = "http://marketplaceservice:8081";
+    private static final String walletServiceURI = "http://walletservice:8082";
 
     /**
      * Constructor for AccountServiceController.
@@ -130,7 +129,7 @@ public class AccountServiceController {
 
             // Remove user's orders from Marketplace
             String marketplaceResponse = restClient.delete()
-                    .uri(baseURI + marketplaceServiceEndpoint + "/marketplace/users/" + id)
+                    .uri(marketplaceServiceURI + "/marketplace/users/" + id)
                     .exchange(((clientRequest, clientResponse) -> {
                         if (clientResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
                             return "No User order found in Marketplace!";
@@ -143,7 +142,7 @@ public class AccountServiceController {
 
             // Remove user's wallet data
             String walletResponse = restClient.delete()
-                    .uri(baseURI + walletServiceEndpoint + "/wallets/" + id)
+                    .uri(walletServiceURI + "/wallets/" + id)
                     .exchange(((clientRequest, clientResponse) -> {
                         if (clientResponse.getStatusCode() == HttpStatus.NOT_FOUND) {
                             return "No User wallet found in Marketplace!";
@@ -176,7 +175,7 @@ public class AccountServiceController {
 
             try {
                 restClient.delete()
-                        .uri(baseURI + marketplaceServiceEndpoint + "/marketplace")
+                        .uri(marketplaceServiceURI + "/marketplace")
                         .retrieve()
                         .toEntity(String.class);
             } catch (HttpClientErrorException e) {
@@ -185,7 +184,7 @@ public class AccountServiceController {
 
             try {
                 restClient.delete()
-                        .uri(baseURI + walletServiceEndpoint + "/wallets")
+                        .uri(walletServiceURI + "/wallets")
                         .retrieve()
                         .toEntity(String.class);
             } catch (HttpClientErrorException e) {

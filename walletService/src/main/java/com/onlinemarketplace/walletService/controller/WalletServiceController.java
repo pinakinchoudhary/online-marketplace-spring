@@ -4,7 +4,6 @@ import com.onlinemarketplace.walletService.model.Wallet;
 import com.onlinemarketplace.walletService.model.WalletRequestBody;
 import com.onlinemarketplace.walletService.repository.WalletRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +24,8 @@ import java.util.Optional;
 public class WalletServiceController {
     private final WalletRepository walletRepository;
     private final RestClient restClient;
-    private static final String baseURI = "http://host.docker.internal";
-    private static final String accountServiceEndpoint = ":8080/users/";
+    private static final String accountServiceURI = "http://accountservice:8080";
+    private static final String accountServiceEndpoint = "/users/";
 
 
     @Autowired
@@ -78,7 +77,7 @@ public class WalletServiceController {
             }
             try {
                 ResponseEntity<Void> accountServiceResponse = restClient.get()
-                        .uri(baseURI + accountServiceEndpoint + user_id)
+                        .uri(accountServiceURI + accountServiceEndpoint + user_id)
                         .retrieve()
                         .toBodilessEntity();
             } catch (RestClientResponseException e) {
