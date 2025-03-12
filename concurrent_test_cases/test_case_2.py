@@ -51,6 +51,7 @@ def place_order_thread(user_id, product_id, attempts=5):
                 print_fail_message("test_post_order failed on expected failure scenario.")
         else:
             print_fail_message(f"Unexpected status code {resp.status_code} for POST /orders.")
+            print(resp.json())
 
 
 def main():
